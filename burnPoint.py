@@ -11,13 +11,15 @@ getLogger().setLevel(DEBUG)
 def one_of(*res):
     return '(?:' + '|'.join(res) + ')'
 
-BLINE = '\n\n'
+BLINE = r'\n\n'
 DASHES = BLINE + '\-+' + BLINE
-TEXT = one_of('.', '\n')
+TEXT = one_of('.', r'\n')
 ASTERISKS = BLINE + '\*+' + BLINE
 NOTE = '__' + TEXT + '+?__'
-LINESTART = one_of('^', '\n')
-TITLE = LINESTART + '#.+\n'
+LINESTART = one_of('^', r'\n')
+HEADER = LINESTART + r'#.+\n'
+TITLE_BLOCK = one_of('^%'+TEXT+'*%'+TEXT+'*'+BLINE, 
+                     '^---'+TEXT+'*\.\.\.')
 
 
 def remove_handout(string):
@@ -39,7 +41,9 @@ def notes_to_list_items(string):
     return '* '+string if is_note(string) else string
     
 def get_notes_string(filestr):
-    lines = findall(one_of(TITLE, NOTE), filestr)
+    regexp = one_of(HEADER, NOTE, TITLE_BLOCK)
+    debug('notes string regex: %s', regexp)
+    lines = findall(regexp, filestr)
     lines = map(notes_to_list_items, lines)
     lines = map(remove_note_markers, lines)
     lines = map(replace_strong_markers, lines)
